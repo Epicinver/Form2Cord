@@ -1,7 +1,7 @@
 function onFormSubmit(e) {
   var webhookUrl = ""; /* webhook */
 
-  var naerr = "may not be answered";  /* goes before question name if answer is N/A */
+  var naerr = "not be answered/this form may be bugged";  /* goes before question name if answer is N/A */
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var form = FormApp.openByUrl(ss.getFormUrl());
   var formName = form.getTitle();
