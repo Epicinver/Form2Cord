@@ -1,6 +1,7 @@
 function onFormSubmit(e) {
-  var webhookUrl = ""; /* VERY IMPORTANT -- Put your webhook here */
+  var webhookUrl = ""; /* webhook */
 
+  var naerr = "may not be answered";  /* goes before question name if answer is N/A */
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var form = FormApp.openByUrl(ss.getFormUrl());
   var formName = form.getTitle();
@@ -37,8 +38,10 @@ function onFormSubmit(e) {
       answer = answer ? "Yes" : "No";
     }
 
+    var fieldName = (answer === "N/A") ? `(${naerr}) ${question}` : question;
+
     fields.push({
-      name: question + ":",
+      name: fieldName + ":",
       value: answer.toString(),
       inline: false
     });
