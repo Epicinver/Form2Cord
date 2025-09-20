@@ -6,7 +6,7 @@
 <details>
   <summary><strong>how</strong></summary>
   <ul>
-    <li>You have to edit the Webhook URL in <a href="https://github.com/Epicinver/Form2Cord/blob/main/source/Form2Cord.appscript.js"><code>Form2Cord.appscript.js</code></a></li>
+    <li>You have to edit the Webhook URL in <a href="https://github.com/Epicinver/Form2Cord/blob/main/Form2Cord.appscript.js"><code>Form2Cord.appscript.js</code></a></li>
     <li>Then, you make a new form.</li>
     <p align="center">
       <img src="screenshots/createform.png" alt="Create a form" width="200"/>
