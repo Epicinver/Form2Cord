@@ -1,16 +1,16 @@
 function onFormSubmit(e) {
-  var webhookUrl = "";
-  
+  var webhookUrl = ""; /* VERY IMPORTANT -- Put your webhook here */
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var form = FormApp.openByUrl(ss.getFormUrl());
   var formName = form.getTitle();
-  
+
   var responses = e.values; 
   var sheet = ss.getActiveSheet();
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
 
   var fields = [];
-  
+
   for (var i = 0; i < responses.length; i++) {
     var question = headers[i];
     var answer = responses[i];
@@ -21,12 +21,20 @@ function onFormSubmit(e) {
       answer = "N/A";
     }
 
-    if (Array.isArray(answer)) {
-      answer = answer.join(", ");
+    if (typeof answer === "string" && answer.indexOf(",") > -1) {
+      answer = answer.split(",").map(function(a){ return a.trim(); }).join(", ");
     }
 
     if (typeof answer === "string" && answer.startsWith("http")) {
-      answer = "[A file has been uploaded. Click to view.](" + answer + ")";
+      answer = "[File uploaded. Click to view.](" + answer + ")";
+    }
+
+    if (!isNaN(answer) && Number(answer) === parseFloat(answer)) {
+      answer = answer.toString();
+    }
+
+    if (typeof answer === "boolean") {
+      answer = answer ? "Yes" : "No";
     }
 
     fields.push({
@@ -36,31 +44,25 @@ function onFormSubmit(e) {
     });
   }
 
-  var timestamp = responses[0] || new Date().toISOString();
+  var timestamp = responses[0] ? new Date(responses[0]) : new Date();
+  var utcString = timestamp.toISOString().replace("T", " ").replace("Z", " UTC");
 
   var email = "Not collected";
   if (headers[1] && headers[1].toLowerCase().includes("email")) {
     email = responses[1] || "Not provided";
   }
 
-  
   var embed = {
-    title: "An answer to '" + formName + "' has been submitted.",
+    title: "New response submitted to '" + formName + "'",
     color: 9693459,
     fields: fields,
-    author: {
-      name: "From the Google Form " + "'" + formName + "'"
-    },
-    footer: {
-      text: "Submitted at " + timestamp + (email !== "Not collected" ? " | Submitted by: " + email : "")
-    }
+    author: { name: "Google Form: " + formName },
+    footer: { text: "Submitted at " + utcString + (email !== "Not collected" ? " | Submitted by: " + email : "") }
   };
 
-  // POST to webhook
   var payload = JSON.stringify({
     content: null,
-    embeds: [embed],
-    attachments: []
+    embeds: [embed]
   });
 
   UrlFetchApp.fetch(webhookUrl, {
