@@ -45,6 +45,6 @@
 <p align="center"><em>thanks for using this :)</em></p>
 <p align="center">                                           👆 is some info</p>
 <p align="center">
-  <bold>Visual Representation:</bold>
-  <a>soon</a>
+  <strong>Visual Representation:</strong>
+  <li>soon</li>
 </p>
