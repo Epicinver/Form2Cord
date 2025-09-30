@@ -1,7 +1,8 @@
 function onFormSubmit(e) {
-  var webhookUrl = ""; /* webhook */
+  var webhookUrl = PropertiesService.getScriptProperties().getProperty("DISCORD_WEBHOOK"); // use propertiesservice (script properties in appsscript settings)
+  if (!webhookUrl) return;
 
-  var naerr = "not be answered/this form may be bugged";  /* goes before question name if answer is N/A */
+  var naerr = "not be answered/this form may be bugged";
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var form = FormApp.openByUrl(ss.getFormUrl());
   var formName = form.getTitle();
@@ -15,44 +16,33 @@ function onFormSubmit(e) {
   for (var i = 0; i < responses.length; i++) {
     var question = headers[i];
     var answer = responses[i];
-
     if (!question || question.toLowerCase() === "timestamp") continue;
-
-    if (!answer) {
-      answer = "N/A";
-    }
-
-    if (typeof answer === "string" && answer.indexOf(",") > -1) {
-      answer = answer.split(",").map(function(a){ return a.trim(); }).join(", ");
-    }
-
-    if (typeof answer === "string" && answer.startsWith("http")) {
-      answer = "[File uploaded. Click to view.](" + answer + ")";
-    }
-
-    if (!isNaN(answer) && Number(answer) === parseFloat(answer)) {
-      answer = answer.toString();
-    }
-
-    if (typeof answer === "boolean") {
-      answer = answer ? "Yes" : "No";
-    }
-
+    if (!answer) answer = "N/A";
+    if (typeof answer === "string" && answer.indexOf(",") > -1) answer = answer.split(",").map(function(a){ return a.trim(); }).join(", ");
+    if (typeof answer === "string" && answer.startsWith("http")) answer = "[File uploaded. Click to view.](" + answer + ")";
+    if (!isNaN(answer) && Number(answer) === parseFloat(answer)) answer = answer.toString();
+    if (typeof answer === "boolean") answer = answer ? "Yes" : "No";
+    if (answer.length > 1024) answer = answer.substring(0, 1020) + "...";
     var fieldName = (answer === "N/A") ? `(${naerr}) ${question}` : question;
-
-    fields.push({
-      name: fieldName + ":",
-      value: answer.toString(),
-      inline: false
-    });
+    fields.push({ name: fieldName + ":", value: answer.toString(), inline: false });
   }
 
-  var timestamp = responses[0] ? new Date(responses[0]) : new Date();
-  var utcString = timestamp.toISOString().replace("T", " ").replace("Z", " UTC");
+var timestamp = new Date();
+if (responses[0]) {
+  var parsed = Date.parse(responses[0]);
+  if (!isNaN(parsed)) {
+    timestamp = new Date(parsed);
+  }
+}
+var utcString = Utilities.formatDate(timestamp, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+
 
   var email = "Not collected";
-  if (headers[1] && headers[1].toLowerCase().includes("email")) {
-    email = responses[1] || "Not provided";
+  for (var j = 0; j < headers.length; j++) {
+    if (headers[j] && headers[j].toLowerCase().includes("email")) {
+      email = responses[j] || "Not provided";
+      break;
+    }
   }
 
   var embed = {
@@ -63,14 +53,9 @@ function onFormSubmit(e) {
     footer: { text: "Submitted at " + utcString + (email !== "Not collected" ? " | Submitted by: " + email : "") }
   };
 
-  var payload = JSON.stringify({
-    content: null,
-    embeds: [embed]
-  });
+  var payload = JSON.stringify({ content: null, embeds: [embed] });
 
-  UrlFetchApp.fetch(webhookUrl, {
-    method: "post",
-    contentType: "application/json",
-    payload: payload
-  });
+  try {
+    UrlFetchApp.fetch(webhookUrl, { method: "post", contentType: "application/json", payload: payload, muteHttpExceptions: true });
+  } catch (err) {}
 }
